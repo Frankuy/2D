@@ -12,7 +12,7 @@ import math
 width = 1000
 height = 1000
 FRAME = 60
-DELAY = 0.01
+DELAY = 0.015
 
 def Init():
 	global BidangAwal
@@ -64,54 +64,82 @@ def transformation(Bidang, func, *args):
 			time.sleep(DELAY)
 
 def translate(Bidang, dx,dy):
+	MT = np.array([[1.0, 0.0],[0.0,1.0]])
+	i = 0
 	for point in Bidang:
-		point += [dx,dy]
+		v = np.resize(point, (2,1))
+		Bidang[i] = np.transpose(np.dot(MT, v) + [[dx],[dy]])
+		i = i + 1
 
 	return Bidang
 
 def dilate(Bidang,k):
-	Bidang*=k
+	MT = np.array([[k, 0.0],[0.0,k]])
+	i = 0
+	for point in Bidang:
+		v = np.resize(point, (2,1))
+		Bidang[i] = np.transpose(np.dot(MT, v))
+		i = i + 1
+
 	return Bidang
 
 def reflectline(Bidang, line):
-	tempx = []
-	tempy = []
-	tempx = np.append(tempx,Bidang[:,0])
-	tempy = np.append(tempy,Bidang[:,1])
 	if (line=='y=x'):
-		Bidang[:,0] = tempy
-		Bidang[:,1] = tempx
+		MT = np.array([[0.0,1.0],[1.0,0.0]])
 	elif (line=='y=-x'):
-		Bidang[:,0] = -1*tempy
-		Bidang[:,1] = -1*tempx
+		MT = np.array([[0.0,-1.0],[-1.0,0.0]])
 	elif (line=='x'):
-		Bidang[:,1] *= -1
+		MT = np.array([[1.0,0.0],[0.0,-1.0]])
 	elif (line=='y'):
-		Bidang[:,0] *= -1
+		MT = np.array([[-1.0,0.0],[0.0,1.0]])
+	
+	i = 0
+	for point in Bidang:
+		v = np.resize(point,(2,1))
+		Bidang[i] = np.transpose(np.dot(MT,v))
+		i = i + 1
+
 	return Bidang
 
 def rotate(Bidang, angle, pointA, pointB):
-	tempx = []
-	tempy = []
-	tempx = np.append(tempx,Bidang[:,0])
-	tempy = np.append(tempy,Bidang[:,1])
 	angle = math.radians(angle)
-	Bidang[:,0] = ((tempx-pointA)*math.cos(angle))-((tempy-pointB)*math.sin(angle))
-	Bidang[:,1] = ((tempx-pointA)*math.sin(angle))+((tempy-pointB)*math.cos(angle))
+	MT = np.array([[math.cos(angle), -math.sin(angle)],[math.sin(angle), math.cos(angle)]])
+	i = 0
+	for point in Bidang:
+		v = np.resize(point,(2,1))
+		tp = np.array([[pointA],[pointB]])
+		v = np.subtract(v, tp)
+		Bidang[i] = np.transpose(np.dot(MT,v) + tp)
+		i = i + 1
+	
 	return Bidang
 
 def shear(Bidang, param, k):
 	if (param == 'x'):
-		Bidang[:,0] += k*Bidang[:,1];
+		MT = np.array([[1.0,k],[0.0,1.0]])
 	elif (param == 'y'):
-		Bidang[:,1] += k*Bidang[:,0];
+		MT = np.array([[1.0,0.0],[k,1.0]])
+
+	i = 0
+	for point in Bidang:
+		v = np.resize(point,(2,1))
+		Bidang[i] = np.transpose(np.dot(MT,v))
+		i = i + 1
+
 	return Bidang
 
 def stretch(Bidang, param, k):
 	if (param == 'x'):
-		Bidang[:,0] *= k
+		MT = np.array([[k,0.0],[0.0,1.0]])
 	elif (param == 'y'):
-		Bidang[:,1] *= k
+		MT = np.array([[1.0,0.0],[0.0,k]])
+
+	i = 0
+	for point in Bidang:
+		v = np.resize(point,(2,1))
+		Bidang[i] = np.transpose(np.dot(MT,v))
+		i = i + 1
+
 	return Bidang
 
 def custom_transform(Bidang,command):
@@ -256,6 +284,19 @@ def display():
 	draw_bidang(Bidang)
 
 	glutSwapBuffers()
+
+def showcommand():
+	print("Transformation For 2D : ")
+	print("- translate <dx> <dy>")
+	print("- dilate <k>")
+	print("- rotate <angle> <a> <b>")
+	print("- shear <x/y> <k>")
+	print("- stretch <x/y> <k>")
+	print("- reflect <y=x/y=-x/x/y/(a,b)>")
+	print("- custom <matriks 2x2>")
+	print("- multiple <n>")
+	print("- reset")
+
 
 
 
